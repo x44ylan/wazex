@@ -30,7 +30,7 @@ npm run build
 npm start
 ```
 
-Open [wazex](http://127.0.0.1:4310), go to **Settings**, and connect Waze. Tap the QR code on your phone or scan it, then approve the connection. Your drives will start appearing automatically.
+Go to **Settings** and connect Waze. Tap the QR code on your phone or scan it, then approve the connection. Your drives will start appearing automatically.
 
 Keep wazex running for weekly sync. On Windows, `npm run start:local` runs it in the background.
 

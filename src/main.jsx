@@ -648,9 +648,7 @@ function App() {
                       "Average drive",
                       `${number(stats.averageMeters / factor)}`,
                       unit,
-                      stats.tripSpeed
-                        ? `${number(stats.tripSpeed.median * (unit === "mi" ? 0.621371 : 1))} ${unit}/h typical trip speed · includes stops`
-                        : "Trip speed unavailable",
+                      null,
                       "green",
                     ],
                   ].map(([Icon, label, value, suffix, sub, tone]) => (
@@ -665,7 +663,7 @@ function App() {
                         {value}
                         <small>{suffix}</small>
                       </div>
-                      <p>{sub}</p>
+                      {sub && <p>{sub}</p>}
                     </section>
                   ))}
                 </div>
@@ -1435,26 +1433,6 @@ function MobileOverview({
       </section>
       <details className="mobile-insights">
         <summary>More insights</summary>
-        <div className="mobile-insight-row">
-          <span>
-            Typical trip speed
-            <small className="metric-context">Median · includes stops</small>
-          </span>
-          <strong>
-            {stats.tripSpeed
-              ? `${number(stats.tripSpeed.median * (unit === "mi" ? 0.621371 : 1))} ${unit}/h`
-              : "—"}
-          </strong>
-        </div>
-        {stats.tripSpeed && (
-          <p className="speed-context">
-            {stats.tripSpeed.samples >= 4
-              ? `Middle half: ${number(stats.tripSpeed.lower * (unit === "mi" ? 0.621371 : 1))}–${number(stats.tripSpeed.upper * (unit === "mi" ? 0.621371 : 1))} ${unit}/h. `
-              : ""}
-            Based on {stats.tripSpeed.samples} timed{" "}
-            {stats.tripSpeed.samples === 1 ? "drive" : "drives"}.
-          </p>
-        )}
         <div className="mobile-insight-row">
           <span>Longest drive</span>
           <strong>

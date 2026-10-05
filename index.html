@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#f7f8fa" />
+    <link
+      id="favicon-fallback"
+      rel="icon"
+      type="image/x-icon"
+      sizes="16x16 32x32 48x48"
+      href="/favicon.ico?v=route1"
+    />
+    <link
+      id="favicon-png"
+      rel="icon"
+      type="image/png"
+      sizes="32x32"
+      href="/favicon.png?v=route1"
+    />
+    <link
+      id="favicon"
+      rel="icon"
+      type="image/svg+xml"
+      sizes="any"
+      href="/icon.svg?v=route1"
+    />
+    <link
+      rel="apple-touch-icon"
+      sizes="180x180"
+      href="/apple-touch-icon.png?v=route1"
+    />
+    <meta name="apple-mobile-web-app-title" content="wazex" />
+    <script>
+      try {
+        const saved = localStorage.getItem("wazex-theme");
+        document.documentElement.dataset.theme =
+          saved === "dark" ||
+          (saved !== "light" &&
+            matchMedia("(prefers-color-scheme: dark)").matches)
+            ? "dark"
+            : "light";
+      } catch {}
+      const dark = document.documentElement.dataset.theme === "dark";
+      document.documentElement.style.colorScheme = dark ? "dark" : "light";
+      document.getElementById("favicon").href =
+        `/icon-${dark ? "dark" : "light"}.svg?v=route1`;
+      document.getElementById("favicon-fallback").href =
+        `/favicon${dark ? "-dark" : ""}.ico?v=route1`;
+      document.getElementById("favicon-png").href =
+        `/favicon${dark ? "-dark" : ""}.png?v=route1`;
+    </script>
+    <title>Wazex</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>

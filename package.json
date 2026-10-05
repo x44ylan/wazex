@@ -1,0 +1,36 @@
+{
+  "name": "wazex",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22.13"
+  },
+  "scripts": {
+    "dev": "concurrently -k \"node --watch server/index.js\" \"vite --host 127.0.0.1\"",
+    "build": "vite build",
+    "start": "node server/index.js",
+    "start:local": "powershell -NoProfile -File scripts/start-local.ps1",
+    "test": "node --test tests/*.test.js",
+    "test:ui": "node tests/ui.mjs",
+    "test:icons": "npm run build && node tests/icons.mjs",
+    "browser:install": "playwright install chromium",
+    "format": "prettier --write index.html vite.config.js server src tests README.md package.json"
+  },
+  "dependencies": {
+    "express": "^5.1.0",
+    "lucide-react": "^0.468.0",
+    "qrcode": "^1.5.4",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "recharts": "^3.0.0",
+    "tough-cookie": "^6.0.2"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^5.0.0",
+    "concurrently": "^9.0.0",
+    "playwright": "^1.63.0",
+    "prettier": "^3.6.2",
+    "vite": "^7.0.0"
+  }
+}

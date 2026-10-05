@@ -154,12 +154,15 @@ export function createStore(filename) {
         )
         .all(account);
     },
-    routes(account) {
+    routes(account, ids) {
+      if (ids?.length === 0) return [];
+      const selection =
+        ids === undefined ? "" : ` AND id IN (${ids.map(() => "?").join(",")})`;
       return db
         .prepare(
-          "SELECT id,start,detail FROM drives WHERE account=? AND meters>0 AND detail IS NOT NULL ORDER BY start ASC,id ASC",
+          `SELECT id,start,detail FROM drives WHERE account=? AND meters>0 AND detail IS NOT NULL${selection} ORDER BY start ASC,id ASC`,
         )
-        .all(account);
+        .all(account, ...(ids || []));
     },
     pendingDetails(account, now = Date.now()) {
       return db

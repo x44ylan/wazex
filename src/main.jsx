@@ -607,6 +607,7 @@ function App() {
                 replay={
                   <DriveReplay
                     account={account}
+                    token={status?.token}
                     drives={filtered}
                     revision={drives
                       .filter((d) => d.hasDetail)
@@ -820,6 +821,7 @@ function App() {
                 </div>
                 <DriveReplay
                   account={account}
+                  token={status?.token}
                   drives={filtered}
                   revision={drives
                     .filter((d) => d.hasDetail)

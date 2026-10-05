@@ -88,8 +88,7 @@ app.use((req, res, next) => {
 });
 app.use(express.json({ limit: "50mb" }));
 const region = () => store.get("region", "row");
-const account = (req) => {
-  const id = req.query.account || store.get("activeAccount");
+const account = (req, id = req.query.account || store.get("activeAccount")) => {
   if (id && !store.accounts().some((a) => a.id === id))
     throw new Error("Unknown archive account");
   return id;
@@ -245,6 +244,33 @@ app.get("/api/routes", (req, res) => {
     id
       ? store
           .routes(id)
+          .map(({ id, start, detail }) => ({
+            id,
+            start,
+            points: routeCoordinates(JSON.parse(detail)),
+          }))
+          .filter((route) => route.points.length > 1)
+      : [],
+  );
+});
+app.post("/api/routes", (req, res) => {
+  const { ids, account: selectedAccount } = req.body || {};
+  if (
+    !Array.isArray(ids) ||
+    ids.length > 200 ||
+    ids.some(
+      (id) => typeof id !== "string" || !id.length || id.length > 4096,
+    ) ||
+    (selectedAccount !== undefined && typeof selectedAccount !== "string")
+  )
+    return res
+      .status(400)
+      .json({ error: "Select up to 200 route IDs from an archive." });
+  const id = account(req, selectedAccount || store.get("activeAccount"));
+  res.json(
+    id
+      ? store
+          .routes(id, [...new Set(ids)])
           .map(({ id, start, detail }) => ({
             id,
             start,

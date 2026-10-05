@@ -24,7 +24,13 @@ try {
     hasDetail: true,
   }));
   await page.route("**/api/drives?*", (r) => r.fulfill({ json: drives }));
-  await page.route("**/api/routes?*", (r) => r.fulfill({ json: routes }));
+  await page.route("**/api/routes", (r) =>
+    r.fulfill({
+      json: routes.filter((route) =>
+        r.request().postDataJSON().ids.includes(route.id),
+      ),
+    }),
+  );
   await page.goto("http://127.0.0.1:4310");
   const replay = page.getByRole("region", { name: "Your roads" });
   await replay.locator("path").first().waitFor();
@@ -122,7 +128,7 @@ try {
       .evaluate((el) => el.style.opacity),
     "0",
   );
-  await page.route("**/api/routes?*", (r) => r.fulfill({ json: [] }));
+  await page.route("**/api/routes", (r) => r.fulfill({ json: [] }));
   await page.reload();
   await page.getByText("Saved routes will appear here.").waitFor();
   assert.equal(await page.locator(".replay-network").count(), 0);

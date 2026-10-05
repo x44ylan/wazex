@@ -2,7 +2,13 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Play, Pause, RotateCcw } from "lucide-react";
 import { projectRoutes } from "./replay-geometry.js";
 
-export default function DriveReplay({ account, drives, revision, demo }) {
+export default function DriveReplay({
+  account,
+  drives,
+  revision,
+  demo,
+  token,
+}) {
   const [source, setSource] = useState([]),
     [load, setLoad] = useState("loading");
   const [phase, setPhase] = useState("ready"),
@@ -15,46 +21,62 @@ export default function DriveReplay({ account, drives, revision, demo }) {
     dot = useRef(null),
     progress = useRef(0),
     speedRef = useRef(speed);
-  const ids = drives
-    .map((d) => d.id)
-    .sort()
-    .join("|");
+  const ids = JSON.stringify(drives.map((d) => d.id).sort());
   const routes = useMemo(() => {
-    const selected = new Set(ids.split("|"));
+    const selected = new Set(JSON.parse(ids));
     return projectRoutes(source.filter((r) => selected.has(r.id)));
   }, [source, ids]);
   useEffect(() => {
     setSource([]);
-    if (!account || demo) {
+    if (!account || demo || ids === "[]") {
       setLoad("empty");
       return;
     }
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 10000);
+    let timeout,
+      cancelled = false;
     setLoad("loading");
-    fetch(`/api/routes?account=${encodeURIComponent(account)}`, {
-      signal: controller.signal,
-    })
-      .then((r) => {
-        if (!r.ok) throw new Error();
-        return r.json();
-      })
+    (async () => {
+      const selected = JSON.parse(ids);
+      const result = [];
+      for (let index = 0; index < selected.length; index += 200) {
+        timeout = setTimeout(() => controller.abort(), 10000);
+        try {
+          const response = await fetch("/api/routes", {
+            method: "POST",
+            signal: controller.signal,
+            headers: {
+              "Content-Type": "application/json",
+              "X-Wazex-Token": token || "",
+            },
+            body: JSON.stringify({
+              account,
+              ids: selected.slice(index, index + 200),
+            }),
+          });
+          if (!response.ok) throw new Error();
+          result.push(...(await response.json()));
+        } finally {
+          clearTimeout(timeout);
+        }
+      }
+      return result;
+    })()
       .then((data) => {
+        if (cancelled) return;
         setSource(data);
         setLoad("done");
       })
       .catch(() => {
         if (!controller.signal.aborted) setLoad("error");
         else if (!cancelled) setLoad("error");
-      })
-      .finally(() => clearTimeout(timeout));
-    let cancelled = false;
+      });
     return () => {
       cancelled = true;
       clearTimeout(timeout);
       controller.abort();
     };
-  }, [account, revision, demo]);
+  }, [account, revision, demo, ids, token]);
   useEffect(() => {
     setPhase("ready");
     setCount(routes.length);

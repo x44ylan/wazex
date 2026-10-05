@@ -317,6 +317,7 @@ function App() {
   }));
   const week = stats.weekdays;
   const active = status?.connected;
+  const ConnectionTools = mobile ? "details" : "div";
   const canSync =
     active || ["checking", "unknown"].includes(status?.connectionState);
   const date = (time) =>
@@ -986,11 +987,16 @@ function App() {
                     <Route size={20} />
                   </span>
                 </div>
-                <details className="connection-tools" open={!active || !!login}>
-                  <summary>
-                    {active ? "Manage connection" : "Connect Waze"}
-                    <ChevronRight size={15} aria-hidden="true" />
-                  </summary>
+                <ConnectionTools
+                  className="connection-tools"
+                  {...(mobile ? { open: !active || !!login } : {})}
+                >
+                  {mobile && (
+                    <summary>
+                      {active ? "Manage connection" : "Connect Waze"}
+                      <ChevronRight size={15} aria-hidden="true" />
+                    </summary>
+                  )}
                   <label>
                     Waze editor region
                     <select
@@ -1119,7 +1125,7 @@ function App() {
                       </button>
                     </div>
                   )}
-                </details>
+                </ConnectionTools>
                 <div className="setting-divider" />
                 <label className="toggle-setting">
                   <div>

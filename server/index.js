@@ -37,7 +37,8 @@ const publicOrigin = originOption ? new URL(originOption).origin : null;
 let running = false,
   progress = null,
   connected = null,
-  lastError = null;
+  lastError = store.runs()[0]?.error || null;
+let connectionError = null;
 let connecting = false,
   lastAttempt = 0;
 let approvalHandled = false;
@@ -48,8 +49,10 @@ async function verifyConnection() {
     connected = store.account(user, region());
     store.set("activeAccount", connected.id);
     connectionState = "connected";
+    connectionError = null;
     return connected;
   } catch (error) {
+    connectionError = error.message;
     if (error.code === "AUTH_REQUIRED") {
       connected = null;
       connectionState = "expired";
@@ -108,12 +111,14 @@ async function sync() {
       onAccount: (account) => {
         connected = account;
         connectionState = "connected";
+        connectionError = null;
       },
       onProgress: (p) => {
         progress = p;
       },
     });
     connected = result.account;
+    lastError = result.warning;
     store.set(
       "syncRecovery",
       result.warning ? recoveryAfter(store.get("syncRecovery")) : null,
@@ -145,6 +150,7 @@ async function pollApproval() {
     store.set("region", state.region);
     connected = store.account(state.account, state.region);
     connectionState = "connected";
+    connectionError = null;
     store.set("activeAccount", connected.id);
     lastError = null;
     void sync().catch(() => {});
@@ -157,6 +163,7 @@ app.get("/api/status", (req, res) =>
     publicOrigin,
     connected,
     connectionState,
+    connectionError,
     activeAccount: store.get("activeAccount"),
     accounts: store.accounts(),
     region: region(),
@@ -216,6 +223,7 @@ app.post("/api/disconnect", async (req, res) => {
   client.disconnect();
   connected = null;
   connectionState = "disconnected";
+  connectionError = null;
   store.set("autoSync", false);
   store.set("syncRecovery", null);
   res.json({ disconnected: true });

@@ -171,8 +171,13 @@ function App() {
         { code: "SERVER_OFFLINE" },
       );
     }
-    const data = await response.json();
-    if (!response.ok) throw new Error(data.error || "Request failed");
+    const data = await response.json().catch(() => null);
+    if (!response.ok)
+      throw new Error(
+        data?.error || `Request failed (HTTP ${response.status}).`,
+      );
+    if (data === null)
+      throw new Error("The server returned an unreadable response.");
     return data;
   }
   async function refreshDrives(id = accountRef.current) {
@@ -539,10 +544,26 @@ function App() {
               </button>
             </div>
           )}
-          {status?.lastError && !error && (
-            <div className="alert error">
+          {status?.connectionError && status.connectionError !== error && (
+            <div className="alert error" role="alert">
+              <AlertCircle size={18} />
+              <span>Waze connection: {status.connectionError}</span>
+            </div>
+          )}
+          {status?.lastError && status.lastError !== error && (
+            <div className="alert error" role="alert">
               <AlertCircle size={18} />
               <span>Last sync: {status.lastError}</span>
+            </div>
+          )}
+          {syncing && status.progress?.routeError && (
+            <div className="alert error" role="alert">
+              <AlertCircle size={18} />
+              <span>
+                Waze routes: {status.progress.routeError} ·{" "}
+                {status.progress.routeErrors} unavailable. Saved trips remain
+                available.
+              </span>
             </div>
           )}
           {syncing && (

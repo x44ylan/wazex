@@ -10,7 +10,8 @@ export default function DriveReplay({
   token,
 }) {
   const [source, setSource] = useState([]),
-    [load, setLoad] = useState("loading");
+    [load, setLoad] = useState("loading"),
+    [loadError, setLoadError] = useState("");
   const [phase, setPhase] = useState("ready"),
     [count, setCount] = useState(0);
   const [speed, setSpeed] = useState(() => {
@@ -28,6 +29,7 @@ export default function DriveReplay({
   }, [source, ids]);
   useEffect(() => {
     setSource([]);
+    setLoadError("");
     if (!account || demo || ids === "[]") {
       setLoad("empty");
       return;
@@ -54,8 +56,14 @@ export default function DriveReplay({
               ids: selected.slice(index, index + 200),
             }),
           });
-          if (!response.ok) throw new Error();
-          result.push(...(await response.json()));
+          const data = await response.json().catch(() => null);
+          if (!response.ok)
+            throw new Error(
+              data?.error || `Couldn’t load routes (HTTP ${response.status}).`,
+            );
+          if (!Array.isArray(data))
+            throw new Error("The server returned unreadable routes.");
+          result.push(...data);
         } finally {
           clearTimeout(timeout);
         }
@@ -67,9 +75,14 @@ export default function DriveReplay({
         setSource(data);
         setLoad("done");
       })
-      .catch(() => {
-        if (!controller.signal.aborted) setLoad("error");
-        else if (!cancelled) setLoad("error");
+      .catch((error) => {
+        if (cancelled) return;
+        setLoadError(
+          controller.signal.aborted
+            ? "Loading routes timed out."
+            : error.message,
+        );
+        setLoad("error");
       });
     return () => {
       cancelled = true;
@@ -232,11 +245,14 @@ export default function DriveReplay({
           </div>
         </>
       ) : (
-        <p className="replay-empty">
+        <p
+          className="replay-empty"
+          role={load === "error" ? "alert" : undefined}
+        >
           {load === "loading"
             ? "Loading your roads…"
             : load === "error"
-              ? "Couldn’t load routes. Refresh to try again."
+              ? `${loadError} Refresh to try again.`
               : "Saved routes will appear here."}
         </p>
       )}

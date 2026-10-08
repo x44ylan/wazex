@@ -24,7 +24,8 @@ export async function syncDrives({
   const run = store.startRun(account.id);
   let added = 0,
     seen = 0,
-    routeErrors = 0;
+    routeErrors = 0,
+    routeError = null;
   try {
     const ids = new Set();
     let offset = 0;
@@ -72,6 +73,7 @@ export async function syncDrives({
       processed,
       total: pending.length,
       routeErrors,
+      routeError,
     });
     for (const d of pending) {
       try {
@@ -83,6 +85,7 @@ export async function syncDrives({
         if (error.code === "AUTH_REQUIRED") throw error;
         store.deferDetail(account.id, d.id, error.message, now());
         routeErrors++;
+        routeError ||= error.message;
       }
       processed++;
       onProgress({
@@ -93,13 +96,14 @@ export async function syncDrives({
         processed,
         total: pending.length,
         routeErrors,
+        routeError,
       });
     }
     const invalidDrives = store.pendingDrives(account.id).length;
     const warnings = [];
     if (routeErrors)
       warnings.push(
-        `${routeErrors} routes unavailable; saved summaries remain available.`,
+        `${routeErrors} routes unavailable: ${routeError} Saved summaries remain available.`,
       );
     if (invalidDrives)
       warnings.push(

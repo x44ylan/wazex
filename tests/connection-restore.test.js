@@ -81,6 +81,10 @@ test(
       const blocked = await start("403");
       assert.equal(blocked.connectionState, "unknown");
       await stop();
+      const guestExpired = await start("403-guest");
+      assert.equal(guestExpired.connectionState, "expired");
+      assert.equal(guestExpired.connected, null);
+      await stop();
       const expired = await start("401");
       assert.equal(expired.connectionState, "expired");
       assert.equal(expired.connected, null);

@@ -24,10 +24,13 @@ globalThis.fetch = async (input, options = {}) => {
     ]);
   if (!options.headers?.Cookie?.includes("_web_session=fixture-approved"))
     return json({}, 401);
-  if (url.pathname.endsWith("/app/Session"))
+  if (url.pathname.endsWith("/app/Session")) {
+    if (process.env.WAZEX_FIXTURE_SESSION_STATUS === "403-guest")
+      return json({ errorLevel: "ERROR", errorList: [{ code: 101, details: "This operation is not allowed by guest user." }] }, 403);
     return process.env.WAZEX_FIXTURE_SESSION_STATUS
       ? json({}, Number(process.env.WAZEX_FIXTURE_SESSION_STATUS))
       : json({ id: "fixture-account", userName: "Fixture driver" });
+  }
   if (url.pathname.endsWith("/Archive/List"))
     return json({
       archives: {

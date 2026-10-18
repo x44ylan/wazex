@@ -53,7 +53,9 @@ export class WazeClient {
       response.status === 401 ||
       (response.status >= 300 &&
         response.status < 400 &&
-        /signin|login/.test(response.headers.get("location") || ""))
+        /signin|login/.test(response.headers.get("location") || "")) ||
+      (response.status === 403 &&
+        /guest user|"code"\s*:\s*101/i.test(text))
     )
       throw authError("Your Waze session needs reconnecting.");
     if (!response.ok)

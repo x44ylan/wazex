@@ -374,6 +374,9 @@ const loginInterval = setInterval(() => {
       lastError = error.message;
     });
 }, 3000);
+const SESSION_HEARTBEAT_MS = 6 * 60 * 60 * 1000;
+let lastHeartbeat = 0;
+
 const interval = setInterval(() => {
   const last = store.get("lastSync");
   const recovery = store.get("syncRecovery");
@@ -384,13 +387,19 @@ const interval = setInterval(() => {
     !connecting &&
     connectionState !== "expired" &&
     connectionState !== "disconnected" &&
-    !["token_created", "token_read"].includes(client.loginStatus().state) &&
-    (recovery
+    !["token_created", "token_read"].includes(client.loginStatus().state)
+  ) {
+    const dueForSync = recovery
       ? Date.now() >= recovery.nextAt
       : Date.now() - lastAttempt >= SYNC_INTERVAL_MS &&
-        (!last || Date.now() - Date.parse(last) >= SYNC_INTERVAL_MS))
-  )
-    void sync().catch(() => {});
+        (!last || Date.now() - Date.parse(last) >= SYNC_INTERVAL_MS);
+    if (dueForSync) {
+      void sync().catch(() => {});
+    } else if (Date.now() - lastHeartbeat >= SESSION_HEARTBEAT_MS) {
+      lastHeartbeat = Date.now();
+      void verifyConnection().catch(() => {});
+    }
+  }
 }, 60000);
 let stopping = false;
 async function stop() {

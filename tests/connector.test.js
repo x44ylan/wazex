@@ -30,6 +30,17 @@ test("connector consumes response bodies on success, expiry, and malformed JSON"
       );
     assert.equal(disposed, true);
   }
+
+  // Waze returns 403 with code 101 / guest user when session expires
+  const guestClient = new WazeClient(null, {
+    fetcher: async () => ({
+      status: 403,
+      ok: false,
+      headers: new Headers({ "content-type": "application/json" }),
+      text: async () => JSON.stringify({ errorLevel: "ERROR", errorList: [{ code: 101, details: "This operation is not allowed by guest user." }] }),
+    }),
+  });
+  await assert.rejects(guestClient.session("row"), (error) => error.code === "AUTH_REQUIRED");
   let disposed = false;
   const client = new WazeClient(null, {
     fetcher: async () => ({

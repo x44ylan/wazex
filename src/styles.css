@@ -2316,3 +2316,17 @@ html[data-theme] .topbar .header-sync:hover {
     opacity: 1;
   }
 }
+/* Map card sits just off the page colour so it reads as part of the page. */
+@media (max-width: 760px) {
+  .replay-stage {
+    background: color-mix(in srgb, var(--text) 3%, var(--page));
+  }
+  html:not([data-theme="dark"]) .replay-stage {
+    background: color-mix(in srgb, var(--text) 3%, var(--surface));
+  }
+}
+@media (max-width: 760px) {
+  .replay-stage button {
+    background: color-mix(in srgb, var(--text) 8%, transparent);
+  }
+}

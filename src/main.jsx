@@ -1381,7 +1381,6 @@ function MobileOverview({
 }) {
   return (
     <div className="mobile-overview">
-      {replay}
       <section className="mobile-summary" aria-label="Summary">
         <div className="mobile-metrics">
           <div>
@@ -1454,6 +1453,7 @@ function MobileOverview({
           <p className="fine-print">Sync Waze to see your driving history.</p>
         )}
       </section>
+      {replay}
       <section>
         <div className="mobile-section-heading">
           <h2>Recent drives</h2>

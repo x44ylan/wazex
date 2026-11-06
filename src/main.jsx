@@ -493,7 +493,9 @@ function App() {
           </button>
         </header>
         <div className="content">
-          <div className="page-heading">
+          <div
+            className={`page-heading${mobile && view === "overview" ? " overview-heading" : ""}`}
+          >
             <div>
               <h1>
                 {view === "overview"

@@ -55,7 +55,9 @@ try {
   await replay.getByRole("button", { name: "Replay", exact: true }).click();
   await page.waitForTimeout(800);
   await replay.getByRole("button", { name: "Pause", exact: true }).click();
-  const frozen = await replay.locator(".replay-heading span").textContent();
+  const frozen = await replay
+    .locator(".replay-count, .replay-heading span")
+    .textContent();
   const offsets = await replay
     .locator(".replay-network")
     .evaluate((el) =>
@@ -65,7 +67,7 @@ try {
     );
   await page.waitForTimeout(500);
   assert.equal(
-    await replay.locator(".replay-heading span").textContent(),
+    await replay.locator(".replay-count, .replay-heading span").textContent(),
     frozen,
   );
   assert.deepEqual(
@@ -84,9 +86,11 @@ try {
   await setSpeed(replay, "2\u00d7");
   assert.ok(
     Number(
-      (await replay.locator(".replay-heading span").textContent()).split(
-        "/",
-      )[0],
+      (
+        await replay
+          .locator(".replay-count, .replay-heading span")
+          .textContent()
+      ).split("/")[0],
     ) >= Number(frozen.split("/")[0]),
   );
   await setSpeed(replay, "4\u00d7");
@@ -94,7 +98,7 @@ try {
     .getByRole("button", { name: "Replay", exact: true })
     .waitFor({ timeout: 6000 });
   assert.equal(
-    await replay.locator(".replay-heading span").textContent(),
+    await replay.locator(".replay-count, .replay-heading span").textContent(),
     "20 / 20 drives",
   );
   for (const width of [320, 390, 760, 1280]) {

@@ -213,30 +213,29 @@ export default function DriveReplay({
       <circle ref={dot} r="3.5" fill="currentColor" style={{ opacity: 0 }} />
     </svg>
   );
-  const counter = routes.length
-    ? phase === "ready"
-      ? `${routes.length} drives`
-      : `${count} / ${routes.length} drives`
-    : "";
+  const counter = routes.length ? `${count} / ${routes.length} drives` : "";
   return (
     <section
       className={`panel drive-replay${compact ? " compact" : ""}`}
       aria-label="Your roads"
     >
-      <div className="replay-heading">
-        <h2>Your roads</h2>
-        <span aria-live="polite">
-          {compact
-            ? counter
-            : routes.length
-              ? `${count} / ${routes.length} drives`
-              : ""}
-        </span>
-      </div>
+      {!compact && (
+        <div className="replay-heading">
+          <h2>Your roads</h2>
+          <span aria-live="polite">{counter}</span>
+        </div>
+      )}
       {routes.length ? (
         compact ? (
           <div className="replay-stage">
             {network}
+            <span
+              className="replay-count"
+              data-visible={phase === "playing" || phase === "paused"}
+              aria-live="polite"
+            >
+              {counter}
+            </span>
             <button
               className="replay-play"
               onClick={play}

@@ -2276,3 +2276,43 @@ html[data-theme] .topbar .header-sync:hover {
   min-width: 0;
   overflow: hidden;
 }
+/* Mobile overview: the tab bar names the page and the map speaks for itself. */
+@media (max-width: 760px) {
+  .page-heading.overview-heading {
+    justify-content: flex-end;
+    margin: -8px 0 4px;
+  }
+  .page-heading.overview-heading h1 {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+  .page-heading.overview-heading .mobile-period {
+    width: auto;
+    text-align: right;
+  }
+  .replay-count {
+    position: absolute;
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--surface) 82%, transparent);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    color: var(--secondary-text);
+    font-size: 12px;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+    opacity: 0;
+    transition: opacity 0.2s;
+    pointer-events: none;
+  }
+  .replay-count[data-visible="true"] {
+    opacity: 1;
+  }
+}

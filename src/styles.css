@@ -2178,3 +2178,101 @@ html[data-theme] .topbar .header-sync:hover {
     font-size: 11px;
   }
 }
+
+/* Mobile overview: roads first, then a compact summary and chart. */
+@media (max-width: 760px) {
+  .mobile-overview {
+    gap: 24px;
+  }
+  .page-heading {
+    margin-bottom: 16px;
+  }
+  .mobile-overview .drive-replay.compact {
+    padding: 0;
+    border: 0;
+    background: transparent;
+  }
+  .drive-replay.compact .replay-heading {
+    margin-bottom: 8px;
+  }
+  .replay-stage {
+    position: relative;
+    border-radius: 16px;
+    background: var(--surface-soft);
+    overflow: hidden;
+  }
+  .drive-replay.compact .replay-network {
+    height: auto;
+    aspect-ratio: 600 / 440;
+    margin: 0;
+  }
+  .replay-stage button {
+    position: absolute;
+    bottom: 10px;
+    min-width: 44px;
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 12px;
+    border: 0;
+    border-radius: 22px;
+    background: color-mix(in srgb, var(--surface) 82%, transparent);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    color: var(--text);
+    font-size: 13px;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+  .replay-stage .replay-play {
+    left: 10px;
+    padding: 0;
+  }
+  .replay-stage .replay-speed {
+    right: 10px;
+    color: var(--blue);
+  }
+  .replay-stage button:focus-visible {
+    outline: 2px solid var(--blue);
+    outline-offset: 2px;
+  }
+  .mobile-metrics {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0;
+  }
+  .mobile-metrics > div + div {
+    padding-left: 12px;
+    border-left: 1px solid var(--line);
+  }
+  .mobile-metrics strong {
+    font-size: clamp(17px, 5.2vw, 20px);
+    font-weight: 600;
+    letter-spacing: -0.3px;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+  .mobile-metrics strong small {
+    font-size: 12px;
+    font-weight: 400;
+    color: var(--muted);
+  }
+  .mobile-metrics span {
+    margin-top: 2px;
+    font-size: 12px;
+  }
+  .mobile-section-heading > span {
+    color: var(--muted);
+    font-size: 12px;
+    font-variant-numeric: tabular-nums;
+  }
+  .mobile-chart .mobile-section-heading {
+    margin-bottom: 4px;
+  }
+}
+/* Recharts measures after a resize; keep the stale frame from widening the page. */
+.mobile-chart {
+  min-width: 0;
+  overflow: hidden;
+}

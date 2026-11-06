@@ -635,6 +635,7 @@ function App() {
                       .map((d) => d.id)
                       .join("|")}
                     demo={demo}
+                    compact
                   />
                 }
               />
@@ -1378,11 +1379,15 @@ function MobileOverview({
 }) {
   return (
     <div className="mobile-overview">
-      <section className="mobile-summary">
-        <div className="mobile-distance">
-          {number(stats.meters / factor)} <small>{unit}</small>
-        </div>
+      {replay}
+      <section className="mobile-summary" aria-label="Summary">
         <div className="mobile-metrics">
+          <div>
+            <strong>
+              {number(stats.meters / factor)} <small>{unit}</small>
+            </strong>
+            <span>Distance</span>
+          </div>
           <div>
             <strong>{compactDuration(stats.seconds)}</strong>
             <span>Driving</span>
@@ -1399,13 +1404,21 @@ function MobileOverview({
         )}
       </section>
       <section className="mobile-chart">
-        <h2>Daily distance</h2>
+        <div className="mobile-section-heading">
+          <h2>Daily distance</h2>
+          {stats.activeDays > 0 && (
+            <span>
+              {number(stats.meters / factor / stats.activeDays)} {unit} per
+              active day
+            </span>
+          )}
+        </div>
         {chart.length > 0 ? (
-          <div style={{ height: 130 }}>
+          <div style={{ height: 96 }}>
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart
                 data={chart}
-                margin={{ top: 16, right: 2, left: 2, bottom: 0 }}
+                margin={{ top: 8, right: 2, left: 2, bottom: 0 }}
               >
                 <XAxis
                   dataKey="label"
@@ -1429,7 +1442,7 @@ function MobileOverview({
                   type="monotone"
                   stroke="var(--blue)"
                   fill="var(--chart-fill)"
-                  strokeWidth={2}
+                  strokeWidth={1.5}
                   isAnimationActive={false}
                 />
               </AreaChart>
@@ -1439,7 +1452,6 @@ function MobileOverview({
           <p className="fine-print">Sync Waze to see your driving history.</p>
         )}
       </section>
-      {replay}
       <section>
         <div className="mobile-section-heading">
           <h2>Recent drives</h2>

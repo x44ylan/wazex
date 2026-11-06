@@ -8,7 +8,9 @@ export default function DriveReplay({
   revision,
   demo,
   token,
+  compact = false,
 }) {
+  const [width, height] = compact ? [600, 440] : [600, 310];
   const [source, setSource] = useState([]),
     [load, setLoad] = useState("loading"),
     [loadError, setLoadError] = useState("");
@@ -25,8 +27,12 @@ export default function DriveReplay({
   const ids = JSON.stringify(drives.map((d) => d.id).sort());
   const routes = useMemo(() => {
     const selected = new Set(JSON.parse(ids));
-    return projectRoutes(source.filter((r) => selected.has(r.id)));
-  }, [source, ids]);
+    return projectRoutes(
+      source.filter((r) => selected.has(r.id)),
+      width,
+      height,
+    );
+  }, [source, ids, width, height]);
   useEffect(() => {
     setSource([]);
     setLoadError("");
@@ -171,79 +177,110 @@ export default function DriveReplay({
     setPhase(phase === "playing" ? "paused" : "playing");
   };
   if (demo) return null;
+  const playIcon =
+    phase === "playing" ? (
+      <Pause size={16} />
+    ) : phase === "done" ? (
+      <RotateCcw size={16} />
+    ) : (
+      <Play size={16} />
+    );
+  const playLabel =
+    phase === "playing" ? "Pause" : phase === "paused" ? "Continue" : "Replay";
+  const speeds = [0.5, 1, 2, 4];
+  const network = (
+    <svg
+      className="replay-network"
+      viewBox={`0 0 ${width} ${height}`}
+      role="img"
+      aria-label="Your saved routes, drawn in chronological order"
+    >
+      {routes.map((r, i) => (
+        <path
+          key={r.id}
+          ref={(p) => {
+            paths.current[i] = p;
+          }}
+          d={r.path}
+          fill="none"
+          stroke="currentColor"
+          strokeWidth={compact ? 2 : 1.6}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          style={{ opacity: 0.38 }}
+        />
+      ))}
+      <circle ref={dot} r="3.5" fill="currentColor" style={{ opacity: 0 }} />
+    </svg>
+  );
+  const counter = routes.length
+    ? phase === "ready"
+      ? `${routes.length} drives`
+      : `${count} / ${routes.length} drives`
+    : "";
   return (
-    <section className="panel drive-replay" aria-label="Your roads">
+    <section
+      className={`panel drive-replay${compact ? " compact" : ""}`}
+      aria-label="Your roads"
+    >
       <div className="replay-heading">
         <h2>Your roads</h2>
         <span aria-live="polite">
-          {routes.length ? `${count} / ${routes.length} drives` : ""}
+          {compact
+            ? counter
+            : routes.length
+              ? `${count} / ${routes.length} drives`
+              : ""}
         </span>
       </div>
       {routes.length ? (
-        <>
-          <svg
-            className="replay-network"
-            viewBox="0 0 600 310"
-            role="img"
-            aria-label="Your saved routes, drawn in chronological order"
-          >
-            {routes.map((r, i) => (
-              <path
-                key={r.id}
-                ref={(p) => {
-                  paths.current[i] = p;
-                }}
-                d={r.path}
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.6"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                style={{ opacity: 0.38 }}
-              />
-            ))}
-            <circle
-              ref={dot}
-              r="3.5"
-              fill="currentColor"
-              style={{ opacity: 0 }}
-            />
-          </svg>
-          <div className="replay-controls">
-            <button className="replay-play" onClick={play}>
-              {phase === "playing" ? (
-                <Pause size={16} />
-              ) : phase === "done" ? (
-                <RotateCcw size={16} />
-              ) : (
-                <Play size={16} />
-              )}{" "}
-              <span>
-                {phase === "playing"
-                  ? "Pause"
-                  : phase === "paused"
-                    ? "Continue"
-                    : "Replay"}
-              </span>
-            </button>
-            <div
-              className="replay-speeds"
-              role="group"
-              aria-label="Replay speed"
+        compact ? (
+          <div className="replay-stage">
+            {network}
+            <button
+              className="replay-play"
+              onClick={play}
+              aria-label={playLabel}
             >
-              {[0.5, 1, 2, 4].map((s) => (
-                <button
-                  key={s}
-                  type="button"
-                  aria-pressed={speed === s}
-                  onClick={() => setSpeed(s)}
-                >
-                  {s}×
-                </button>
-              ))}
-            </div>
+              {playIcon}
+            </button>
+            <button
+              type="button"
+              className="replay-speed"
+              aria-label={`Replay speed ${speed}×`}
+              onClick={() =>
+                setSpeed(speeds[(speeds.indexOf(speed) + 1) % speeds.length])
+              }
+            >
+              {speed}×
+            </button>
           </div>
-        </>
+        ) : (
+          <>
+            {network}
+            <div className="replay-controls">
+              <button className="replay-play" onClick={play}>
+                {playIcon} <span>{playLabel}</span>
+              </button>
+              <div
+                className="replay-speeds"
+                role="group"
+                aria-label="Replay speed"
+              >
+                {speeds.map((s) => (
+                  <button
+                    key={s}
+                    type="button"
+                    aria-pressed={speed === s}
+                    onClick={() => setSpeed(s)}
+                  >
+                    {s}×
+                  </button>
+                ))}
+              </div>
+            </div>
+          </>
+        )
       ) : (
         <p
           className="replay-empty"

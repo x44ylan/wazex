@@ -1,7 +1,24 @@
 import { chromium } from "playwright";
 import assert from "node:assert/strict";
 
-const browser = await chromium.launch({ headless: true });
+const base = process.env.WAZEX_URL || "http://127.0.0.1:4310";
+const browser = await chromium.launch({
+  headless: true,
+  executablePath: process.env.BROWSER_EXECUTABLE,
+});
+// Desktop shows a speed group; the compact mobile map cycles one button.
+async function setSpeed(replay, value) {
+  const group = replay.getByRole("group", { name: "Replay speed" });
+  if (await group.count())
+    return group.getByRole("button", { name: value, exact: true }).click();
+  const button = replay.locator(".replay-speed");
+  for (let i = 0; i < 4; i++) {
+    if ((await button.getAttribute("aria-label")) === `Replay speed ${value}`)
+      return;
+    await button.click();
+  }
+  throw new Error(`Speed ${value} not reachable`);
+}
 try {
   const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
   const errors = [];
@@ -31,7 +48,7 @@ try {
       ),
     }),
   );
-  await page.goto("http://127.0.0.1:4310");
+  await page.goto(base);
   const replay = page.getByRole("region", { name: "Your roads" });
   await replay.locator("path").first().waitFor();
   assert.equal(await replay.locator(".replay-network path").count(), 20);
@@ -61,16 +78,10 @@ try {
       ),
     offsets,
   );
-  await replay
-    .getByRole("group", { name: "Replay speed" })
-    .getByRole("button", { name: "4\u00d7", exact: true })
-    .click();
+  await setSpeed(replay, "4\u00d7");
   await replay.getByRole("button", { name: "Continue", exact: true }).click();
   await page.waitForTimeout(300);
-  await replay
-    .getByRole("group", { name: "Replay speed" })
-    .getByRole("button", { name: "2\u00d7", exact: true })
-    .click();
+  await setSpeed(replay, "2\u00d7");
   assert.ok(
     Number(
       (await replay.locator(".replay-heading span").textContent()).split(
@@ -78,10 +89,7 @@ try {
       )[0],
     ) >= Number(frozen.split("/")[0]),
   );
-  await replay
-    .getByRole("group", { name: "Replay speed" })
-    .getByRole("button", { name: "4\u00d7", exact: true })
-    .click();
+  await setSpeed(replay, "4\u00d7");
   await replay
     .getByRole("button", { name: "Replay", exact: true })
     .waitFor({ timeout: 6000 });
@@ -95,17 +103,27 @@ try {
       .getByRole("region", { name: "Your roads" })
       .locator(".replay-network")
       .waitFor();
-    assert.equal(
-      await page.evaluate(() => document.documentElement.scrollWidth),
-      width,
+    // Let responsive layout and chart measurement settle after the resize.
+    await page.waitForFunction(
+      ([w, desktop]) =>
+        document.documentElement.scrollWidth === w &&
+        !!document.querySelector(desktop ? ".replay-speeds" : ".replay-speed"),
+      [width, width > 760],
+      { timeout: 3000 },
     );
-    for (const selector of [".replay-play", ".replay-speeds button"])
+    for (const selector of [
+      ".replay-play",
+      width > 760 ? ".replay-speeds button" : ".replay-speed",
+    ])
       assert.ok(
         await page
           .locator(selector)
-          .evaluateAll((elements) =>
-            elements.every((el) => el.getBoundingClientRect().height >= 44),
+          .evaluateAll(
+            (elements) =>
+              elements.length > 0 &&
+              elements.every((el) => el.getBoundingClientRect().height >= 44),
           ),
+        `${selector} touch target at ${width}px`,
       );
   }
   await page.reload();

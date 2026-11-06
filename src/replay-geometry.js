@@ -1,5 +1,5 @@
 // All drives share one geographic projection; archived payloads remain untouched.
-export function projectRoutes(routes) {
+export function projectRoutes(routes, width = 600, height = 310) {
   const valid = routes
     .map((route) => ({
       ...route,
@@ -35,11 +35,11 @@ export function projectRoutes(routes) {
     }),
   }));
   const scale = Math.min(
-    560 / Math.max(maxX - minX, 1e-8),
-    270 / Math.max(maxY - minY, 1e-8),
+    (width - 40) / Math.max(maxX - minX, 1e-8),
+    (height - 40) / Math.max(maxY - minY, 1e-8),
   );
-  const offsetX = (600 - (maxX - minX) * scale) / 2,
-    offsetY = (310 - (maxY - minY) * scale) / 2;
+  const offsetX = (width - (maxX - minX) * scale) / 2,
+    offsetY = (height - (maxY - minY) * scale) / 2;
   return projected.map((route) => ({
     id: route.id,
     start: route.start,

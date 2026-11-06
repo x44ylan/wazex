@@ -2316,13 +2316,11 @@ html[data-theme] .topbar .header-sync:hover {
     opacity: 1;
   }
 }
-/* Map card sits just off the page colour so it reads as part of the page. */
+/* Map draws straight on the page; no card behind it. */
 @media (max-width: 760px) {
   .replay-stage {
-    background: color-mix(in srgb, var(--text) 3%, var(--page));
-  }
-  html:not([data-theme="dark"]) .replay-stage {
-    background: color-mix(in srgb, var(--text) 3%, var(--surface));
+    background: transparent;
+    border-radius: 0;
   }
 }
 @media (max-width: 760px) {

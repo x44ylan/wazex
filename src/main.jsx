@@ -1404,6 +1404,7 @@ function MobileOverview({
           </p>
         )}
       </section>
+      {replay}
       <section className="mobile-chart">
         <div className="mobile-section-heading">
           <h2>Daily distance</h2>
@@ -1453,7 +1454,6 @@ function MobileOverview({
           <p className="fine-print">Sync Waze to see your driving history.</p>
         )}
       </section>
-      {replay}
       <section>
         <div className="mobile-section-heading">
           <h2>Recent drives</h2>

@@ -2279,8 +2279,7 @@ html[data-theme] .topbar .header-sync:hover {
 /* Mobile overview: the tab bar names the page and the map speaks for itself. */
 @media (max-width: 760px) {
   .page-heading.overview-heading {
-    justify-content: flex-end;
-    margin: -8px 0 4px;
+    margin: 0;
   }
   .page-heading.overview-heading h1 {
     position: absolute;
@@ -2290,9 +2289,16 @@ html[data-theme] .topbar .header-sync:hover {
     clip-path: inset(50%);
     white-space: nowrap;
   }
-  .page-heading.overview-heading .mobile-period {
+  /* Range picker lives in the top bar, beside sync. */
+  .topbar .mobile-period {
     width: auto;
+    min-height: 40px;
+    margin-left: auto;
+    padding: 8px 4px;
     text-align: right;
+  }
+  .topbar .mobile-period + .header-sync {
+    margin-left: 4px;
   }
   .replay-count {
     position: absolute;

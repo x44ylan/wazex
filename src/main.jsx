@@ -456,6 +456,19 @@ function App() {
               </button>
             ))}
           </nav>
+          {mobile && view !== "settings" && (
+            <select
+              className="mobile-period"
+              aria-label="Time range"
+              value={range}
+              onChange={(event) => setRange(event.target.value)}
+            >
+              <option value="all">All time</option>
+              <option value="90">90 days</option>
+              <option value="30">30 days</option>
+              <option value="7">7 days</option>
+            </select>
+          )}
           <button
             className="primary header-sync"
             aria-label={
@@ -505,19 +518,6 @@ function App() {
                     : "Settings"}
               </h1>
             </div>
-            {mobile && view !== "settings" && (
-              <select
-                className="mobile-period"
-                aria-label="Time range"
-                value={range}
-                onChange={(event) => setRange(event.target.value)}
-              >
-                <option value="all">All time</option>
-                <option value="90">90 days</option>
-                <option value="30">30 days</option>
-                <option value="7">7 days</option>
-              </select>
-            )}
           </div>
           {networkError && (
             <div className="alert error" role="alert">

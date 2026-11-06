@@ -4,8 +4,8 @@ import { REGIONS } from "./sync.js";
 
 const ORIGIN = "https://www.waze.com";
 const LOGIN = "/_user/api/login/multidevice/token";
-const authError = (message) =>
-  Object.assign(new Error(message), { code: "AUTH_REQUIRED" });
+const authError = (message, detail = {}) =>
+  Object.assign(new Error(message), { code: "AUTH_REQUIRED", ...detail });
 
 export class WazeClient {
   constructor(vault, { fetcher = fetch, now = Date.now } = {}) {
@@ -49,15 +49,22 @@ export class WazeClient {
       await jar.setCookie(cookie, url.href);
     const text = await response.text();
     if (jar === this.jar && this.vault) this.vault.save(await jar.serialize());
-    if (
-      response.status === 401 ||
-      (response.status >= 300 &&
-        response.status < 400 &&
-        /signin|login/.test(response.headers.get("location") || "")) ||
-      (response.status === 403 &&
-        /guest user|"code"\s*:\s*101/i.test(text))
-    )
-      throw authError("Your Waze session needs reconnecting.");
+    const location = response.headers.get("location") || "";
+    const authReason =
+      response.status === 401
+        ? "unauthorized"
+        : response.status >= 300 &&
+            response.status < 400 &&
+            /signin|login/.test(location)
+          ? "signin_redirect"
+          : response.status === 403 && /guest user|"code"\s*:\s*101/i.test(text)
+            ? "guest_user"
+            : null;
+    if (authReason)
+      throw authError("Your Waze session needs reconnecting.", {
+        status: response.status,
+        reason: authReason,
+      });
     if (!response.ok)
       throw Object.assign(
         new Error(`Waze returned HTTP ${response.status}. Please retry later.`),
@@ -202,7 +209,9 @@ export class WazeClient {
   async session(region) {
     const data = await this.get(region, "Session", { language: "en-US" });
     if (!data.id || !data.userName)
-      throw authError("Connect your Waze account with the QR code first.");
+      throw authError("Connect your Waze account with the QR code first.", {
+        reason: "no_user",
+      });
     return { id: data.id, userName: data.userName };
   }
   async hasSession() {

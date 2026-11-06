@@ -1,4 +1,5 @@
 import { retryRead } from "./recovery.js";
+import { ROUTE_MAX_ATTEMPTS } from "./store.js";
 
 export const REGIONS = {
   row: "row-Descartes",
@@ -25,6 +26,7 @@ export async function syncDrives({
   let added = 0,
     seen = 0,
     routeErrors = 0,
+    routesAbandoned = 0,
     routeError = null;
   try {
     const ids = new Set();
@@ -83,9 +85,17 @@ export async function syncDrives({
         fetched++;
       } catch (error) {
         if (error.code === "AUTH_REQUIRED") throw error;
-        store.deferDetail(account.id, d.id, error.message, now());
-        routeErrors++;
-        routeError ||= error.message;
+        const attempts = store.deferDetail(
+          account.id,
+          d.id,
+          error.message,
+          now(),
+        );
+        if (attempts >= ROUTE_MAX_ATTEMPTS) routesAbandoned++;
+        else {
+          routeErrors++;
+          routeError ||= error.message;
+        }
       }
       processed++;
       onProgress({
@@ -126,6 +136,7 @@ export async function syncDrives({
       seen,
       fetched,
       routeErrors,
+      routesAbandoned,
       invalidDrives,
       warning,
     };

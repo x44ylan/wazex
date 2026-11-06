@@ -3,6 +3,10 @@ import { mkdirSync } from "node:fs";
 import { dirname } from "node:path";
 import { SYNC_INTERVAL_MS } from "./recovery.js";
 
+// After this many failed detail fetches a route is treated as unavailable on
+// Waze's side: it stays listed without a map and no longer warns.
+export const ROUTE_MAX_ATTEMPTS = 3;
+
 export function normalizeDrive(d) {
   d ??= {};
   const start = Number(d.startTime),
@@ -41,7 +45,17 @@ export function createStore(filename) {
     CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT NOT NULL);
     CREATE TABLE IF NOT EXISTS sync_runs (id INTEGER PRIMARY KEY, account TEXT, started TEXT NOT NULL, finished TEXT, status TEXT NOT NULL, added INTEGER NOT NULL DEFAULT 0, seen INTEGER NOT NULL DEFAULT 0, error TEXT);
     CREATE TABLE IF NOT EXISTS pending_drives (account TEXT NOT NULL REFERENCES accounts(id), source TEXT NOT NULL, error TEXT NOT NULL, PRIMARY KEY(account,source));
-    CREATE TABLE IF NOT EXISTS route_retries (account TEXT NOT NULL, id TEXT NOT NULL, next_at INTEGER NOT NULL, error TEXT NOT NULL, PRIMARY KEY(account,id), FOREIGN KEY(account,id) REFERENCES drives(account,id));`);
+    CREATE TABLE IF NOT EXISTS route_retries (account TEXT NOT NULL, id TEXT NOT NULL, next_at INTEGER NOT NULL, error TEXT NOT NULL, PRIMARY KEY(account,id), FOREIGN KEY(account,id) REFERENCES drives(account,id));
+    CREATE TABLE IF NOT EXISTS connection_events (id INTEGER PRIMARY KEY, at TEXT NOT NULL, state TEXT NOT NULL, previous TEXT, source TEXT, reason TEXT, status INTEGER, error TEXT, last_verified TEXT, connected_since TEXT);`);
+  if (
+    !db
+      .prepare("PRAGMA table_info(route_retries)")
+      .all()
+      .some((column) => column.name === "attempts")
+  )
+    db.exec(
+      "ALTER TABLE route_retries ADD COLUMN attempts INTEGER NOT NULL DEFAULT 1",
+    );
   if (
     db
       .prepare("PRAGMA table_info(drives)")
@@ -130,10 +144,36 @@ export function createStore(filename) {
         id,
       );
     },
+    // Returns the number of failed attempts for this route, including this one.
     deferDetail(account, id, error, now = Date.now()) {
+      return db
+        .prepare(
+          "INSERT INTO route_retries(account,id,next_at,error,attempts) VALUES (?,?,?,?,1) ON CONFLICT(account,id) DO UPDATE SET next_at=excluded.next_at,error=excluded.error,attempts=attempts+1 RETURNING attempts",
+        )
+        .get(account, id, now + SYNC_INTERVAL_MS, error).attempts;
+    },
+    connectionEvent(event) {
       db.prepare(
-        "INSERT INTO route_retries VALUES (?,?,?,?) ON CONFLICT(account,id) DO UPDATE SET next_at=excluded.next_at,error=excluded.error",
-      ).run(account, id, now + SYNC_INTERVAL_MS, error);
+        "INSERT INTO connection_events(at,state,previous,source,reason,status,error,last_verified,connected_since) VALUES (?,?,?,?,?,?,?,?,?)",
+      ).run(
+        new Date().toISOString(),
+        event.state,
+        event.previous ?? null,
+        event.source ?? null,
+        event.reason ?? null,
+        event.status ?? null,
+        event.error ?? null,
+        event.lastVerified ?? null,
+        event.connectedSince ?? null,
+      );
+      db.prepare(
+        "DELETE FROM connection_events WHERE id <= (SELECT MAX(id) - 500 FROM connection_events)",
+      ).run();
+    },
+    connectionEvents(limit = 20) {
+      return db
+        .prepare("SELECT * FROM connection_events ORDER BY id DESC LIMIT ?")
+        .all(limit);
     },
     drive(account, id) {
       const d = db
@@ -167,9 +207,9 @@ export function createStore(filename) {
     pendingDetails(account, now = Date.now()) {
       return db
         .prepare(
-          "SELECT d.id,d.summary FROM drives d LEFT JOIN route_retries r ON r.account=d.account AND r.id=d.id WHERE d.account=? AND d.detail IS NULL AND d.meters > 0 AND (r.next_at IS NULL OR r.next_at<=?) ORDER BY d.start ASC",
+          "SELECT d.id,d.summary FROM drives d LEFT JOIN route_retries r ON r.account=d.account AND r.id=d.id WHERE d.account=? AND d.detail IS NULL AND d.meters > 0 AND (r.next_at IS NULL OR (r.next_at<=? AND r.attempts<?)) ORDER BY d.start ASC",
         )
-        .all(account, now)
+        .all(account, now, ROUTE_MAX_ATTEMPTS)
         .filter((d) => JSON.parse(d.summary).hasFullSession);
     },
     runs() {

@@ -43,20 +43,49 @@ let connecting = false,
   lastAttempt = 0;
 let approvalHandled = false;
 let connectionState = "checking";
-async function verifyConnection() {
+// Persist every connection state change so session lifetimes and the reason
+// Waze rejected a session survive container restarts.
+function setConnectionState(state, source, error = null) {
+  const previous = connectionState;
+  connectionState = state;
+  if (state === "connected") {
+    store.set("lastVerified", new Date().toISOString());
+    if (!store.get("connectedSince"))
+      store.set("connectedSince", new Date().toISOString());
+  }
+  if (state === previous) return;
+  const event = {
+    state,
+    previous,
+    source,
+    reason: error?.reason ?? null,
+    status: error?.status ?? null,
+    error: error?.message ?? null,
+    lastVerified: store.get("lastVerified"),
+    connectedSince: store.get("connectedSince"),
+  };
+  store.connectionEvent(event);
+  if (["expired", "disconnected"].includes(state))
+    store.set("connectedSince", null);
+  console.log(
+    `wazex connection ${previous} -> ${state}`,
+    JSON.stringify(event),
+  );
+}
+async function verifyConnection(source = "check") {
   try {
     const user = await client.session(region());
     connected = store.account(user, region());
     store.set("activeAccount", connected.id);
-    connectionState = "connected";
+    setConnectionState("connected", source);
     connectionError = null;
     return connected;
   } catch (error) {
     connectionError = error.message;
     if (error.code === "AUTH_REQUIRED") {
       connected = null;
-      connectionState = "expired";
-    } else connectionState = "unknown";
+      setConnectionState("expired", source, error);
+    } else setConnectionState("unknown", source, error);
     throw error;
   }
 }
@@ -110,7 +139,7 @@ async function sync() {
       region: region(),
       onAccount: (account) => {
         connected = account;
-        connectionState = "connected";
+        setConnectionState("connected", "sync");
         connectionError = null;
       },
       onProgress: (p) => {
@@ -128,7 +157,7 @@ async function sync() {
     lastError = error.message;
     if (error.code === "AUTH_REQUIRED") {
       connected = null;
-      connectionState = "expired";
+      setConnectionState("expired", "sync", error);
     }
     store.set(
       "syncRecovery",
@@ -148,8 +177,9 @@ async function pollApproval() {
   if (state.state === "connected" && state.account && !approvalHandled) {
     approvalHandled = true;
     store.set("region", state.region);
+    store.set("connectedSince", null);
     connected = store.account(state.account, state.region);
-    connectionState = "connected";
+    setConnectionState("connected", "qr_login");
     connectionError = null;
     store.set("activeAccount", connected.id);
     lastError = null;
@@ -164,6 +194,9 @@ app.get("/api/status", (req, res) =>
     connected,
     connectionState,
     connectionError,
+    connectedSince: store.get("connectedSince"),
+    lastVerified: store.get("lastVerified"),
+    connectionEvents: store.connectionEvents(),
     activeAccount: store.get("activeAccount"),
     accounts: store.accounts(),
     region: region(),
@@ -211,7 +244,7 @@ app.post("/api/connection", async (req, res) => {
     return res
       .status(409)
       .json({ error: "Wait for the current operation to finish." });
-  await verifyConnection();
+  await verifyConnection("manual");
   lastError = null;
   res.json(connected);
 });
@@ -222,7 +255,7 @@ app.post("/api/disconnect", async (req, res) => {
       .json({ error: "Wait for the current operation to finish." });
   client.disconnect();
   connected = null;
-  connectionState = "disconnected";
+  setConnectionState("disconnected", "user");
   connectionError = null;
   store.set("autoSync", false);
   store.set("syncRecovery", null);
@@ -362,8 +395,8 @@ const server = app.listen(port, "127.0.0.1", () =>
   console.log(`wazex listening on http://127.0.0.1:${port}`),
 );
 void (async () => {
-  if (await client.hasSession()) await verifyConnection();
-  else connectionState = "disconnected";
+  if (await client.hasSession()) await verifyConnection("startup");
+  else setConnectionState("disconnected", "startup");
 })().catch(() => {});
 const loginInterval = setInterval(() => {
   if (
@@ -397,7 +430,7 @@ const interval = setInterval(() => {
       void sync().catch(() => {});
     } else if (Date.now() - lastHeartbeat >= SESSION_HEARTBEAT_MS) {
       lastHeartbeat = Date.now();
-      void verifyConnection().catch(() => {});
+      void verifyConnection("heartbeat").catch(() => {});
     }
   }
 }, 60000);

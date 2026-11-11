@@ -2270,6 +2270,20 @@ html[data-theme] .topbar .header-sync:hover {
   .mobile-chart .mobile-section-heading {
     margin-bottom: 4px;
   }
+  .mobile-chart-average {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    margin: 0;
+    color: var(--muted);
+    font-size: 12px;
+    font-variant-numeric: tabular-nums;
+  }
+  .mobile-chart-average strong {
+    color: var(--secondary-text);
+    font-size: 14px;
+    font-weight: 600;
+  }
 }
 /* Recharts measures after a resize; keep the stale frame from widening the page. */
 .mobile-chart {

@@ -1405,16 +1405,15 @@ function MobileOverview({
         )}
       </section>
       {replay}
-      <section className="mobile-chart">
-        <div className="mobile-section-heading">
-          <h2>Daily distance</h2>
-          {stats.activeDays > 0 && (
-            <span>
-              {number(stats.meters / factor / stats.activeDays)} {unit} per
-              active day
-            </span>
-          )}
-        </div>
+      <section className="mobile-chart" aria-label="Daily distance">
+        {stats.activeDays > 0 && (
+          <p className="mobile-chart-average">
+            <strong>
+              {number(stats.meters / factor / stats.activeDays)} {unit}
+            </strong>
+            <span>per active day</span>
+          </p>
+        )}
         {chart.length > 0 ? (
           <div style={{ height: 96 }}>
             <ResponsiveContainer width="100%" height="100%">

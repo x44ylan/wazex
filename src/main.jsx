@@ -1400,8 +1400,7 @@ function MobileOverview({
           <p className="fine-print">Sync Waze to see your driving history.</p>
         )}
       </section>
-      <details className="mobile-insights">
-        <summary>More insights</summary>
+      <section className="mobile-insights" aria-label="Insights">
         <div className="mobile-insight-row">
           <span>Longest drive</span>
           <strong>
@@ -1421,7 +1420,7 @@ function MobileOverview({
           </strong>
         </div>
         <Heatmap drives={drives} timezone={timezone} />
-      </details>
+      </section>
     </div>
   );
 }

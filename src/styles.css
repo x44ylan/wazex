@@ -1467,13 +1467,6 @@ footer {
   width: 100%;
   max-width: 100%;
 }
-.mobile-insights summary {
-  cursor: pointer;
-  font-size: 12px;
-  color: var(--muted);
-  min-height: 44px;
-  padding: 12px 0;
-}
 .mobile-insights .heatmap-scroll {
   width: 100%;
   max-width: 100%;
@@ -2243,8 +2236,11 @@ html[data-theme] .topbar .header-sync:hover {
     gap: 0;
   }
   .mobile-metrics > div + div {
-    padding-left: 12px;
     border-left: 1px solid var(--line);
+  }
+  .mobile-metrics > div {
+    min-width: 0;
+    text-align: center;
   }
   .mobile-metrics strong {
     font-size: clamp(17px, 5.2vw, 20px);

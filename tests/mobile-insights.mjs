@@ -1,15 +1,27 @@
 import { chromium } from "playwright";
 import assert from "node:assert/strict";
 
-const browser = await chromium.launch({ headless: true });
+const browser = await chromium.launch({
+  headless: true,
+  executablePath: process.env.BROWSER_EXECUTABLE,
+});
 try {
   const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
   const errors = [];
   page.on("pageerror", (error) => errors.push(error.message));
-  await page.goto("http://127.0.0.1:4310");
+  await page.goto(process.env.WAZEX_URL || "http://127.0.0.1:4310");
   for (const width of [390, 320, 430]) {
     await page.setViewportSize({ width, height: 844 });
-    await page.locator(".mobile-insights summary").click();
+    await page.getByText("Longest drive", { exact: true }).waitFor();
+    assert.equal(await page.locator(".mobile-insights summary").count(), 0);
+    assert.equal(
+      await page
+        .locator(".mobile-metrics > div")
+        .evaluateAll((items) =>
+          items.every((item) => getComputedStyle(item).textAlign === "center"),
+        ),
+      true,
+    );
     const layout = await page.evaluate(() => {
       const heatmap = document.querySelector(
         ".mobile-insights .heatmap-scroll",
@@ -38,23 +50,13 @@ try {
       el.scrollLeft = el.scrollWidth;
     });
     assert.ok(await heatmap.evaluate((el) => el.scrollLeft > 0));
-    await page.locator(".mobile-insights summary").click();
-    assert.equal(
-      await page.locator(".mobile-insights").getAttribute("open"),
-      null,
-    );
-    assert.equal(
-      await page.evaluate(() => document.documentElement.scrollWidth),
-      width,
-    );
   }
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.locator(".mobile-insights summary").click();
   await page.locator(".mobile-insights").scrollIntoViewIfNeeded();
   await page.screenshot({ path: "data/insights-after.png", fullPage: false });
   assert.deepEqual(errors, []);
   console.log(
-    "Mobile insights verified at 320/390/430px: expand/collapse, contained heatmap scrolling, navigation width, no page overflow or errors.",
+    "Mobile insights verified at 320/390/430px: visible insights, centered stats, contained heatmap scrolling, navigation width, no page overflow or errors.",
   );
 } finally {
   await browser.close();

@@ -34,6 +34,12 @@ Go to **Settings** and connect Waze. Tap the QR code on your phone or scan it, t
 
 Keep wazex running for weekly sync. On Windows, `npm run start:local` runs it in the background.
 
+When hosting behind a reverse proxy, set `WAZEX_PUBLIC_ORIGIN` to the HTTPS
+origin. Additional trusted origins can be supplied as a comma-separated list in
+`WAZEX_ADDITIONAL_ORIGINS`. These settings allow requests from those origins;
+they do not authenticate visitors, so protect public access with an identity-aware
+proxy.
+
 ## A few things to know
 
 Unofficial and not affiliated with Waze. Only drives still available from Waze can be downloaded.

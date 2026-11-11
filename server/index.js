@@ -34,6 +34,11 @@ const originOption =
     .find((arg) => arg.startsWith("--public-origin="))
     ?.slice("--public-origin=".length) || process.env.WAZEX_PUBLIC_ORIGIN;
 const publicOrigin = originOption ? new URL(originOption).origin : null;
+const additionalOrigins = (process.env.WAZEX_ADDITIONAL_ORIGINS || "")
+  .split(",")
+  .map((origin) => origin.trim())
+  .filter(Boolean)
+  .map((origin) => new URL(origin).origin);
 let running = false,
   progress = null,
   connected = null,
@@ -97,12 +102,19 @@ app.use((req, res, next) => {
     "127.0.0.1:5173",
     "localhost:5173",
     ...(publicOrigin ? [new URL(publicOrigin).host] : []),
+    ...additionalOrigins.map((origin) => new URL(origin).host),
   ];
   const allowedOrigins = [
     ...allowedHosts
-      .filter((h) => !publicOrigin || h !== new URL(publicOrigin).host)
+      .filter(
+        (h) =>
+          ![publicOrigin, ...additionalOrigins]
+            .filter(Boolean)
+            .some((origin) => new URL(origin).host === h),
+      )
       .map((h) => `http://${h}`),
     ...(publicOrigin ? [publicOrigin] : []),
+    ...additionalOrigins,
   ];
   if (!allowedHosts.includes(req.headers.host))
     return res.status(403).json({ error: "Invalid host" });

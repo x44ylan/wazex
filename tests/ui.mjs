@@ -2,13 +2,16 @@ import { chromium } from "playwright";
 import assert from "node:assert/strict";
 import { mkdirSync } from "node:fs";
 mkdirSync("data", { recursive: true });
-const browser = await chromium.launch({ headless: true });
+const browser = await chromium.launch({
+  headless: true,
+  executablePath: process.env.BROWSER_EXECUTABLE,
+});
 const page = await browser.newPage({ viewport: { width: 1440, height: 1100 } });
 const errors = [];
 page.on("pageerror", (e) => errors.push(e.message));
 try {
   await page.route("**/api/drives?*", (route) => route.fulfill({ json: [] }));
-  await page.goto("http://127.0.0.1:4310");
+  await page.goto(process.env.WAZEX_URL || "http://127.0.0.1:4310");
   await page.getByRole("button", { name: "Preview with sample data" }).click();
   await page
     .getByText("You’re exploring sample data. Your real archive is separate.")
@@ -37,7 +40,9 @@ try {
   assert.equal(await page.getByLabel("Time range").inputValue(), "7");
   await page.getByLabel("Time range").selectOption("all");
   assert.equal(await page.getByRole("navigation").count(), 1);
-  assert.equal(await page.locator(".mobile-drive-list").count(), 1);
+  assert.equal(await page.locator(".mobile-drive-list").count(), 0);
+  assert.equal(await page.getByText("per active day").count(), 0);
+  assert.equal(await page.getByText("Recent drives").count(), 0);
   await page.getByRole("button", { name: "Drive archive" }).click();
   await page.locator(".mobile-drive-list").waitFor();
   await page.locator(".mobile-drive").first().click();

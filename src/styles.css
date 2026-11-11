@@ -2270,20 +2270,6 @@ html[data-theme] .topbar .header-sync:hover {
   .mobile-chart .mobile-section-heading {
     margin-bottom: 4px;
   }
-  .mobile-chart-average {
-    display: flex;
-    align-items: baseline;
-    gap: 8px;
-    margin: 0;
-    color: var(--muted);
-    font-size: 12px;
-    font-variant-numeric: tabular-nums;
-  }
-  .mobile-chart-average strong {
-    color: var(--secondary-text);
-    font-size: 14px;
-    font-weight: 600;
-  }
 }
 /* Recharts measures after a resize; keep the stale frame from widening the page. */
 .mobile-chart {
@@ -2346,5 +2332,56 @@ html[data-theme] .topbar .header-sync:hover {
 @media (max-width: 760px) {
   .replay-stage button {
     background: color-mix(in srgb, var(--text) 8%, transparent);
+  }
+}
+
+/* Overview: keep the road trace and distance chart together on wide screens. */
+@media (min-width: 761px) {
+  .overview-main,
+  .overview-secondary {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 24px;
+    margin-bottom: 24px;
+  }
+  .overview-main > :only-child {
+    grid-column: 1 / -1;
+  }
+  .overview-main .drive-replay {
+    margin: 0;
+  }
+  .overview-main .replay-network {
+    height: 225px;
+    margin: 8px 0;
+  }
+  .overview-main .distance-panel {
+    display: flex;
+    flex-direction: column;
+  }
+  .overview-main .area-chart {
+    flex: 1;
+    min-height: 225px;
+  }
+  .overview-secondary .longest-card {
+    padding: 24px;
+  }
+}
+@media (min-width: 761px) and (max-width: 950px) {
+  .overview-main,
+  .overview-secondary {
+    grid-template-columns: 1fr;
+  }
+}
+@media (min-width: 761px) {
+  .overview-secondary .longest-card {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 8px;
+  }
+  .overview-secondary .longest-card h2,
+  .overview-secondary .longest-card p {
+    margin: 0;
   }
 }

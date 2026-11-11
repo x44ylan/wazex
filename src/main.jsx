@@ -622,10 +622,6 @@ function App() {
                 drives={filtered}
                 factor={factor}
                 unit={unit}
-                date={date}
-                time={time}
-                onDrive={showDrive}
-                onAll={() => setView("drives")}
                 timezone={timezone}
                 replay={
                   <DriveReplay
@@ -700,7 +696,17 @@ function App() {
                     records with known end times.
                   </p>
                 )}
-                <div className="chart-grid">
+                <div className="overview-main">
+                  <DriveReplay
+                    account={account}
+                    token={status?.token}
+                    drives={filtered}
+                    revision={drives
+                      .filter((d) => d.hasDetail)
+                      .map((d) => d.id)
+                      .join("|")}
+                    demo={demo}
+                  />
                   <section className="panel distance-panel">
                     <div className="panel-heading">
                       <div>
@@ -782,6 +788,8 @@ function App() {
                       )}
                     </div>
                   </section>
+                </div>
+                <div className="overview-secondary">
                   <section className="panel weekly-panel">
                     <div className="panel-heading">
                       <div>
@@ -842,71 +850,6 @@ function App() {
                       </div>
                     </div>
                   </section>
-                </div>
-                <DriveReplay
-                  account={account}
-                  token={status?.token}
-                  drives={filtered}
-                  revision={drives
-                    .filter((d) => d.hasDetail)
-                    .map((d) => d.id)
-                    .join("|")}
-                  demo={demo}
-                />
-                <section className="panel activity-panel">
-                  <div className="panel-heading">
-                    <div>
-                      <h2>Activity</h2>
-                      <p>Drives per day</p>
-                    </div>
-                    <div className="heat-legend">
-                      Less{" "}
-                      {[0, 1, 2, 3, 4].map((v) => (
-                        <i key={v} className={`heat level-${v}`} />
-                      ))}{" "}
-                      More
-                    </div>
-                  </div>
-                  <Heatmap drives={all} timezone={timezone} />
-                </section>
-                <div className="bottom-grid">
-                  <section className="panel">
-                    <div className="panel-heading">
-                      <div>
-                        <h2>Recent drives</h2>
-                        <p>Latest archived records</p>
-                      </div>
-                      <button
-                        className="text-link"
-                        onClick={() => setView("drives")}
-                      >
-                        View all <ArrowUpRight size={15} />
-                      </button>
-                    </div>
-                    {filtered.length ? (
-                      <DriveTable
-                        drives={filtered.slice(0, 5)}
-                        date={date}
-                        time={time}
-                        factor={factor}
-                        unit={unit}
-                        onDrive={showDrive}
-                      />
-                    ) : (
-                      <div className="empty-recent">
-                        <CarFront size={26} />
-                        <p>
-                          Your next drive is the beginning of a great archive.
-                        </p>
-                        <button
-                          className="text-link"
-                          onClick={() => setView("settings")}
-                        >
-                          Connect your Waze account <ArrowUpRight size={15} />
-                        </button>
-                      </div>
-                    )}
-                  </section>
                   <section className="longest-card">
                     <div className="eyebrow">LONGEST DRIVE</div>
                     <Route size={34} />
@@ -928,6 +871,22 @@ function App() {
                     <span className="road-decoration" />
                   </section>
                 </div>
+                <section className="panel activity-panel">
+                  <div className="panel-heading">
+                    <div>
+                      <h2>Activity</h2>
+                      <p>Drives per day</p>
+                    </div>
+                    <div className="heat-legend">
+                      Less{" "}
+                      {[0, 1, 2, 3, 4].map((v) => (
+                        <i key={v} className={`heat level-${v}`} />
+                      ))}{" "}
+                      More
+                    </div>
+                  </div>
+                  <Heatmap drives={all} timezone={timezone} />
+                </section>
               </>
             ))}
           {view === "drives" && (
@@ -1373,10 +1332,6 @@ function MobileOverview({
   drives,
   factor,
   unit,
-  date,
-  time,
-  onDrive,
-  onAll,
   timezone,
 }) {
   return (
@@ -1406,14 +1361,6 @@ function MobileOverview({
       </section>
       {replay}
       <section className="mobile-chart" aria-label="Daily distance">
-        {stats.activeDays > 0 && (
-          <p className="mobile-chart-average">
-            <strong>
-              {number(stats.meters / factor / stats.activeDays)} {unit}
-            </strong>
-            <span>per active day</span>
-          </p>
-        )}
         {chart.length > 0 ? (
           <div style={{ height: 96 }}>
             <ResponsiveContainer width="100%" height="100%">
@@ -1451,26 +1398,6 @@ function MobileOverview({
           </div>
         ) : (
           <p className="fine-print">Sync Waze to see your driving history.</p>
-        )}
-      </section>
-      <section>
-        <div className="mobile-section-heading">
-          <h2>Recent drives</h2>
-          <button className="text-link" onClick={onAll}>
-            View all
-          </button>
-        </div>
-        <DriveTable
-          mobile
-          drives={drives.slice(0, 3)}
-          date={date}
-          time={time}
-          factor={factor}
-          unit={unit}
-          onDrive={onDrive}
-        />
-        {!drives.length && (
-          <p className="fine-print">No drives in this period.</p>
         )}
       </section>
       <details className="mobile-insights">

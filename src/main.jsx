@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useLayoutEffect, useRef } from "react";
 import DriveReplay from "./DriveReplay.jsx";
 import { createRoot } from "react-dom/client";
 import {
@@ -1419,7 +1419,7 @@ function MobileOverview({
               : "—"}
           </strong>
         </div>
-        <Heatmap drives={drives} timezone={timezone} />
+        <Heatmap drives={drives} timezone={timezone} startAtLatest />
       </section>
     </div>
   );
@@ -1532,7 +1532,15 @@ function EmptyChart({ onDemo }) {
     </div>
   );
 }
-function Heatmap({ drives, timezone }) {
+function Heatmap({ drives, timezone, startAtLatest = false }) {
+  const scrollRef = useRef(null);
+  useLayoutEffect(() => {
+    if (startAtLatest) {
+      const heatmap = scrollRef.current;
+      heatmap.scrollLeft = heatmap.scrollWidth;
+    }
+  }, [startAtLatest]);
+
   const todayKey = dayKey(Date.now(), timezone),
     today = new Date(`${todayKey}T12:00:00Z`),
     counts = new Map();
@@ -1564,7 +1572,7 @@ function Heatmap({ drives, timezone }) {
       });
   }
   return (
-    <div className="heatmap-scroll">
+    <div className="heatmap-scroll" ref={scrollRef}>
       <div className="heatmap-months">
         {months.map((m) => (
           <span key={m.col} style={{ gridColumn: m.col + 1 }}>

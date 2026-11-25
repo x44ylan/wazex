@@ -9,9 +9,9 @@ try {
   const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
   const errors = [];
   page.on("pageerror", (error) => errors.push(error.message));
-  await page.goto(process.env.WAZEX_URL || "http://127.0.0.1:4310");
   for (const width of [390, 320, 430]) {
     await page.setViewportSize({ width, height: 844 });
+    await page.goto(process.env.WAZEX_URL || "http://127.0.0.1:4310");
     await page.getByText("Longest drive", { exact: true }).waitFor();
     assert.equal(await page.locator(".mobile-insights summary").count(), 0);
     assert.equal(
@@ -46,10 +46,17 @@ try {
     assert.ok(layout.heatmapWidth <= layout.overviewWidth);
     assert.ok(layout.heatmapContent > layout.heatmapWidth);
     const heatmap = page.locator(".mobile-insights .heatmap-scroll");
+    assert.ok(
+      await heatmap.evaluate(
+        (el) => Math.abs(el.scrollWidth - el.clientWidth - el.scrollLeft) <= 1,
+      ),
+      `Heatmap should start at the newest dates at ${width}px`,
+    );
     await heatmap.evaluate((el) => {
-      el.scrollLeft = el.scrollWidth;
+      el.scrollLeft = 0;
     });
-    assert.ok(await heatmap.evaluate((el) => el.scrollLeft > 0));
+    await page.getByLabel("Time range").selectOption("30");
+    assert.equal(await heatmap.evaluate((el) => el.scrollLeft), 0);
   }
   await page.setViewportSize({ width: 390, height: 844 });
   await page.locator(".mobile-insights").scrollIntoViewIfNeeded();

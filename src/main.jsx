@@ -1400,25 +1400,7 @@ function MobileOverview({
           <p className="fine-print">Sync Waze to see your driving history.</p>
         )}
       </section>
-      <section className="mobile-insights" aria-label="Insights">
-        <div className="mobile-insight-row">
-          <span>Longest drive</span>
-          <strong>
-            {number((stats.longest?.meters || 0) / factor)} {unit}
-          </strong>
-        </div>
-        <div className="mobile-insight-row">
-          <span>Active days</span>
-          <strong>{stats.activeDays}</strong>
-        </div>
-        <div className="mobile-insight-row">
-          <span>Busiest departure hour</span>
-          <strong>
-            {stats.count
-              ? `${String(stats.busiestHour).padStart(2, "0")}:00`
-              : "—"}
-          </strong>
-        </div>
+      <section className="mobile-insights" aria-label="Driving activity">
         <Heatmap drives={drives} timezone={timezone} startAtLatest />
       </section>
     </div>

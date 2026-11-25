@@ -1474,16 +1474,6 @@ footer {
   overflow-x: auto;
   overscroll-behavior-x: contain;
 }
-.mobile-insight-row {
-  display: flex;
-  justify-content: space-between;
-  margin: 16px 0;
-  font-size: 12px;
-  gap: 16px;
-}
-.mobile-insight-row strong {
-  flex-shrink: 0;
-}
 .metric-context {
   display: block;
   color: var(--muted);

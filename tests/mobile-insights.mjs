@@ -12,8 +12,21 @@ try {
   for (const width of [390, 320, 430]) {
     await page.setViewportSize({ width, height: 844 });
     await page.goto(process.env.WAZEX_URL || "http://127.0.0.1:4310");
-    await page.getByText("Longest drive", { exact: true }).waitFor();
-    assert.equal(await page.locator(".mobile-insights summary").count(), 0);
+    const heatmap = page.locator(".mobile-insights .heatmap-scroll");
+    await heatmap.waitFor();
+    for (const label of [
+      "Longest drive",
+      "Active days",
+      "Busiest departure hour",
+    ]) {
+      assert.equal(await page.getByText(label, { exact: true }).count(), 0);
+    }
+    assert.equal(
+      await page
+        .locator(".mobile-chart + .mobile-insights .heatmap-scroll")
+        .count(),
+      1,
+    );
     assert.equal(
       await page
         .locator(".mobile-metrics > div")
@@ -40,12 +53,11 @@ try {
     assert.equal(
       layout.pageWidth,
       width,
-      `Expanded insights overflow at ${width}px`,
+      `Mobile overview overflows at ${width}px`,
     );
     assert.equal(layout.navWidth, width);
     assert.ok(layout.heatmapWidth <= layout.overviewWidth);
     assert.ok(layout.heatmapContent > layout.heatmapWidth);
-    const heatmap = page.locator(".mobile-insights .heatmap-scroll");
     assert.ok(
       await heatmap.evaluate(
         (el) => Math.abs(el.scrollWidth - el.clientWidth - el.scrollLeft) <= 1,
@@ -63,7 +75,7 @@ try {
   await page.screenshot({ path: "data/insights-after.png", fullPage: false });
   assert.deepEqual(errors, []);
   console.log(
-    "Mobile insights verified at 320/390/430px: visible insights, centered stats, contained heatmap scrolling, navigation width, no page overflow or errors.",
+    "Mobile overview verified at 320/390/430px: heatmap follows the line chart, opens at the newest dates, and scrolls without widening the page.",
   );
 } finally {
   await browser.close();
